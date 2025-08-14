@@ -2,6 +2,7 @@ const User = require ('../Models/userModel')
 const bcrypt = require("bcryptjs");
 const cloudinary = require ('cloudinary').v2
 const jwt = require ('jsonwebtoken')
+// const asyncHandler = require('express-async-handler');
 
 const signup = async (req,res)=>{
     try {
@@ -84,6 +85,7 @@ const Login = async (req,res)=>{
       process.env.JWT_SECRET,
       {expiresIn:'1h'})
 
+      console.log('Generated token:', token);
     res.json({ _id: user._id,
        name: user.name,
        email: user.email,
@@ -140,11 +142,11 @@ const updateProfile = async (req,res)=>{
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
+    const users = await User.find({})
+    res.json(users);
   } catch (error) {
     console.error('Get users error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Failed to fetch users' });
   }
 };
 
@@ -296,7 +298,8 @@ module.exports = { signup, Login, updateProfile,getUsers,
   searchUsers,
   createUser,
   updateUser,
-  deleteUser 
+  deleteUser,
+   
 };
 
 

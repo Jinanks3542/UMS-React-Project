@@ -10,8 +10,8 @@ import AdminDashboard from "./Components/Admin/AdminDashboard";
 import AdminLogin from "./Components/Admin/AdminLogin/Login";
 
 const PrivateRoute = ({ children, adminOnly }) => {
-  const { user, token } = useSelector((state) => state.auth);
-  if (!token || !user) {
+  const { isAuth, user } = useSelector((state) => state.auth);
+  if (!isAuth|| !user) {
     return <Navigate to="/login" />;
   }
   if (adminOnly && user.role !== "admin") {
@@ -21,9 +21,7 @@ const PrivateRoute = ({ children, adminOnly }) => {
 };
 
 const App = () => {
-  // const isAuth = localStorage.getItem("isAuth");
 
-  // console.log(isAuth, "kakak");
   return (
     <>
       <Routes>
@@ -34,12 +32,12 @@ const App = () => {
           path="/profile"
           element={
             <PrivateRoute>
-              {" "}
-              <Profile />{" "}
+              
+              <Profile />
             </PrivateRoute>
           }
         />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin adminOnly={true} />} />
         <Route
           path="/admin"
           element={
@@ -48,40 +46,13 @@ const App = () => {
             </PrivateRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
       <ToastContainer />
     </>
   );
 
-  // return (
-  //   <Routes>
-  //     {/* Public Routes */}
-  //     {!isAuth && (
-  //       <>
-  //         <Route path="/" element={<Login />} />
-  //         <Route path="/signup" element={<Signup />} />
-  //         {/* Redirect logged-in users trying to access login/register */}
-  //         <Route path="/profile" element={<Navigate to="/" />} />
-  //         <Route path="/profile" element={<Navigate to="/signup" />} />
-  //       </>
-  //     )}
-
-  //     {/* Private Routes */}
-  //     {isAuth && (
-  //       <>
-  //         {/* <Route path="/profile" element={<Profile />} /> */}
-  //         <Route path="/profile" element={<Profile />} />
-  //         {/* Redirect unauthenticated routes */}
-  //         <Route path="/" element={<Navigate to="/profile" />} />
-  //         <Route path="/signup" element={<Navigate to="/profile" />} />
-  //       </>
-  //     )}
-
-  //     {/* Catch-all: Optional */}
-  //     <Route path="*" element={<Navigate to={isAuth ? "/profile" : "/"} />} />
-  //   </Routes>
-  // );
+  
 };
 
 export default App;

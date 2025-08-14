@@ -1,12 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import { FaUser } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { useForm } from 'react-hook-form';
-import {loginUser} from '../../../redux/Store';
+import {  loginUser } from '../../../redux/Slices/AuthSlice.js';
+import { store } from '../../../redux/Store';
 
 const login = () => {
 
@@ -15,14 +16,25 @@ const login = () => {
   const {register, handleSubmit, formState:{errors}} = useForm()
   const [isLoading, setIsLoading] = useState(false);
     
+  // const { isAuth, user } = useSelector((state) => state.auth);
+
+  // useEffect(() => {
+  //   console.log('isAuth:', isAuth, 'user:', user);
+  //   if (isAuth && user) {  
+  //     navigate('/profile');
+  //   }
+  // }, [isAuth, user, navigate]);
 
     const onSubmit = async (data) =>{
       setIsLoading(true)
       try {
-        await loginUser(data.email,data.password, dispatch);
+        const response = await dispatch(loginUser({ email: data.email, password: data.password })).unwrap();
+        console.log('Login response:', response);
+        console.log('Redux state after login:', store.getState().auth);
         toast.success('Login Successfulll')
+        console.log('Before navigate');
         navigate('/profile')
-        window.location.reload()
+        console.log('After navigate');
       } catch (error) {
         toast.error(error.message || 'Login failed')
       }finally{
@@ -38,7 +50,7 @@ const login = () => {
         <div className="flex justify-center mb-4">
           <FaUser size={40} />
         </div>
-        <h2 className="text-2xl mb-4 text-center">Login</h2>
+        <h2 className="text-2xl mb-4 text-center"> User Login</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block mb-1">Email</label>

@@ -4,7 +4,7 @@ import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useForm } from 'react-hook-form';
-import { signupUser } from '../../../redux/Store';
+import { signup as signupUser } from '../../../redux/Slices/AuthSlice';
 import { useDispatch } from 'react-redux';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -31,7 +31,7 @@ const signup = () => {
       formData.append('image', data.image[0])
     }
     try {
-      await signupUser(formData, dispatch)
+      await dispatch(signupUser(formData)).unwrap()
       toast.success('Registration Successfull')
       navigate('/login')
     } catch (error) {

@@ -5,13 +5,15 @@ import { deleteUser } from '../../redux/Store';
 import { useDispatch } from 'react-redux';
 
 // UserTable: Displays users in a table with edit/delete options
-const UserTable = ({ users, openModal, refreshUsers }) => {
+const UserTable = ({ users, openModal, refreshUsers, token }) => {
 const dispatch = useDispatch();
 const [currentPage,setCurrentPage] = useState(1)
 const itemsInPage = 5
 
+// console.log('Token received in UserTable.......:', token); 
 
-const getUser = users.filter((user)=>user.role!=='admin')
+const userList = Array.isArray(users) ? users : [];
+const getUser = userList.filter((user)=>user.role!=='admin')
 const totalPage = Math.ceil(getUser.length/itemsInPage)
 const start = (currentPage-1)*itemsInPage
 const paginatedUsers = getUser.slice(start, start+itemsInPage)
@@ -25,15 +27,16 @@ const next = ()=>{
 }
 
 
-
   // handleDelete: Deletes a user
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await deleteUser(id, dispatch);
+        // console.log('Token passed to deleteUser.....:', token); 
+        await deleteUser(id, dispatch,token);
         toast.success('User deleted successfully');
         refreshUsers();
       } catch (error) {
+        // console.error('Handle delete error:', error.message);
         toast.error(error.message);
       }
     }

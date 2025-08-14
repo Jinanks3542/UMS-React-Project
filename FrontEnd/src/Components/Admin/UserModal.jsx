@@ -3,11 +3,15 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { createUser, updateAdminUser } from '../../redux/Store';
 import { FaUserCircle } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { logout } from '../../redux/Slices/AuthSlice.js';
 
 // UserModal: Modal for creating or editing users
 const UserModal = ({ isOpen, closeModal, user, refreshUsers }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate()
+  const token = useSelector((state) => state.auth.token);
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: user ? { name: user.name, email: user.email, role: user.role } : {},
   });
@@ -24,6 +28,15 @@ const UserModal = ({ isOpen, closeModal, user, refreshUsers }) => {
   // onSubmit: Submits create/update form
   const onSubmit = async (data) => {
     setIsLoading(true);
+
+    if (!token) {
+    toast.error('Authentication token missing. Please log in again.');
+    dispatch(logout()); // Clear state
+    navigate('/admin/login'); // Redirect to login
+    setIsLoading(false);
+    return;
+    }
+
     const formData = new FormData();
     formData.append('name', data.name);
     formData.append('email', data.email);
@@ -36,10 +49,10 @@ const UserModal = ({ isOpen, closeModal, user, refreshUsers }) => {
     }
     try {
       if (user) {
-        await updateAdminUser(user._id, formData, dispatch);
+        await updateAdminUser(user._id, formData, dispatch,token);
         toast.success('User updated successfully');
       } else {
-        await createUser(formData, dispatch);
+        await createUser(formData, dispatch, token);
         toast.success('User created successfully');
       }
       refreshUsers();

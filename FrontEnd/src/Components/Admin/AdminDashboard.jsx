@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { logout, getUsers, searchUsers } from '../../redux/Store';
+import {logout} from '../../redux/Slices/AuthSlice.js';
+import {  getUsers, searchUsers } from '../../redux/Store';
 import { toast } from 'react-toastify';
 import UserTable from './UserTable';
 import UserModal from './UserModal';
@@ -10,7 +11,7 @@ import UserModal from './UserModal';
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+  const { user, token, isAuth } = useSelector((state) => state.auth);
   const users = useSelector((state) => state.users);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,31 +20,51 @@ const AdminDashboard = () => {
 
   // fetchUsers: Fetches all users on component mount
   useEffect(() => {
+    // console.log('Redux auth state:', { user, token, isAuth })
+    if (!isAuth || !user || !token) {
+      // console.log('Redirecting to admin login due to missing auth data');
+      toast.error('Please log in as admin');
+      navigate('/admin/login');
+      return;
+    }
+
     const fetchUsers = async () => {
       try {
-        await getUsers(dispatch);
+        // console.log('Fetching users with token:', token); 
+        await getUsers(dispatch, token);
       } catch (error) {
-        toast.error(error.message);
+        // console.error('Fetch users error:', error);
+        toast.error(error.message || 'Failed to fetch users');
+        if (error.message?.includes('Unauthorized') || error.message?.includes('token failed')) {
+          dispatch(logout());
+          navigate('/admin/login');
+        }
       }
     };
+
     fetchUsers();
-  }, [dispatch]);
+  }, [dispatch, token, isAuth, user, navigate]);
 
   // handleSearch: Searches users by name or email
   const handleSearch = async (e) => {
     e.preventDefault();
     try {
-      await searchUsers(searchQuery, dispatch);
+      await searchUsers(searchQuery, dispatch, token);
     } catch (error) {
       toast.error(error.message);
     }
   };
 
   // handleLogout: Logs out the admin
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success('Logged out successfully');
-    navigate('/admin-login');
+  const handleLogout = async () => {
+    await dispatch(logout());
+    if(user?.role==='admin'){
+        navigate('/admin/login')
+        toast.success('Logged out successfully');
+    }else{
+      navigate('/login')
+    }
+    
   };
 
   // openModal: Opens modal for creating/editing a user
@@ -61,32 +82,33 @@ const AdminDashboard = () => {
   // refreshUsers: Refreshes the user list
   const refreshUsers = async () => {
     try {
-      await getUsers(dispatch);
+      await getUsers(dispatch,token);
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to refresh users');
     }
   };
 
-  const scrollToTable = () => {
-    tableRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // const scrollToTable = () => {
+  //   tableRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // };
+
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-6">
 
-          <h1 className="text-3xl font-bold">User Management</h1>
+          <h1 className="text-3xl font-bold">User List</h1>
           <div className="flex space-x-4">
-            <p className="text-lg">Welcome, {user?.name}</p>
-            {user?.role === 'admin' &&(
+            {/* <p className="text-lg">Welcome, {user?.name}</p> */}
+            {/* {user?.role === 'admin' &&(
             <button
               onClick={scrollToTable}
               className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               View Users
             </button>
-            )}
+            )} */}
             <button
               onClick={() => openModal()}
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -119,14 +141,20 @@ const AdminDashboard = () => {
           </div>
         </form>
         <div ref={tableRef}>
-          <UserTable users={users} openModal={openModal} refreshUsers={refreshUsers} />
+          <UserTable 
+          users={users} 
+          openModal={openModal} 
+          refreshUsers={refreshUsers} 
+          token={token} />
         </div>
+        
         {isModalOpen && (
           <UserModal
             isOpen={isModalOpen}
             closeModal={closeModal}
             user={selectedUser}
             refreshUsers={refreshUsers}
+            token={token}
           />
         )}
       </div>

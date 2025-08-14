@@ -5,11 +5,13 @@ import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useForm } from 'react-hook-form';
-import { loginUser } from '../../../redux/Store';
-import { logout } from '../../../redux/Store';
+import { loginUser } from "../../../redux/Slices/AuthSlice.js";
+import { logout } from "../../../redux/Slices/AuthSlice.js";
 
 
-const Login = () => {
+
+
+const Login = ({adminOnly=false}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -18,14 +20,23 @@ const Login = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const response = await loginUser(data.email, data.password, dispatch);
-      if (response.role === 'admin') {
-        toast.success('Admin Login Successful');
-        navigate('/admin');
-      } else {
-        toast.error('Not authorized as admin');
-        dispatch(logout()); 
+      const response = await dispatch(loginUser(data)).unwrap();
+      console.log('Admin login response:', response);
+      if ( adminOnly &&  response.user?.role !== 'admin') {
+        dispatch(logout())
+        toast.error('not authorised as admin');
+        return
+      } 
+      
+      toast.success(response.user?.role === 'admin' ? 'Admin login successful' : 'Login successful');
+      if(response.user?.role === 'admin'){
+        
+        navigate('/admin')
+      }else{
+        toast.success('User Login Successfull')
+        navigate('/profile')
       }
+        
     } catch (error) {
       toast.error(error.message || 'Login failed');
     } finally {

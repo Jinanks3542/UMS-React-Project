@@ -1,15 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout, updateUser } from "../../../redux/Store";
 import { toast } from "react-toastify";
 import { FaUserCircle } from "react-icons/fa";
 import { useForm } from "react-hook-form";
+import { logout, updateUser } from '../../../redux/Slices/AuthSlice.js'; 
 
 const profile = () => {
-  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user, isAuth, token } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!isAuth || !user) {
+      navigate("/login");
+    }
+  }, [isAuth, user, navigate]);
   const {
     register,
     handleSubmit,
@@ -49,7 +55,7 @@ const profile = () => {
       formData.append("image", data.image[0]);
     }
     try {
-      await updateUser(formData, dispatch);
+      await dispatch(updateUser({userData:formData, token}));
       toast.success("Profile updated successfully");
       setIsEditing(false);
     } catch (error) {
@@ -59,6 +65,11 @@ const profile = () => {
       setIsLoading(false);
     }
   };
+
+   if (!user) {
+    
+    return null;
+  }
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded shadow-md text-center w-full max-w-md">
